@@ -60,20 +60,22 @@ def evaluate_expression(tokens):
     i = 0
     while i < len(tokens):
         token = tokens[i]
-        if '/' in token and token.count('/') == 1 and not token.startswith('/'):
-            operands.append(parse_fraction(token))
+        if token.endswith('!') and token[:-1].isdigit():
+            # Handle factorial directly after a number
+            num = ArbitraryInt(token[:-1])
+            operands.append(factorial(num))
         elif token.isdigit() or (token.startswith('-') and token[1:].isdigit()):
             operands.append(ArbitraryInt(token))
-        elif token in precedence:
-            while (operators and operators[-1] in precedence and
-                   precedence[operators[-1]] >= precedence[token]):
-                apply_operator()
-            operators.append(token)
         elif token == '!':
             if not operands:
                 raise ValueError("Invalid expression")
             num = operands.pop()
             operands.append(factorial(num))
+        elif token in precedence:
+            while (operators and operators[-1] in precedence and
+                   precedence[operators[-1]] >= precedence[token]):
+                apply_operator()
+            operators.append(token)
         elif token.startswith('log'):
             base = ArbitraryInt(token[3:])
             num = operands.pop()
@@ -88,6 +90,17 @@ def evaluate_expression(tokens):
             base = int(tokens[i + 2])
             operands.append(from_base(num, base))
             i += 2
+        elif token in {'add_fractions', 'multiply_fractions'}:
+            if len(operands) < 2:
+                raise ValueError("Invalid expression for fractions")
+            right = operands.pop()
+            left = operands.pop()
+            if not isinstance(left, Fraction) or not isinstance(right, Fraction):
+                raise ValueError("Both operands must be fractions")
+            if token == 'add_fractions':
+                operands.append(add_fractions(left, right))
+            elif token == 'multiply_fractions':
+                operands.append(multiply_fractions(left, right))
         else:
             raise ValueError(f"Invalid token: {token}")
         i += 1
