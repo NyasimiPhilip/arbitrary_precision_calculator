@@ -1,65 +1,157 @@
+import os
 from ArbitraryInt import ArbitraryInt
 from operations import add, subtract, multiply, divide, modulo, power, factorial, logarithm
 from base_conversion import to_base, from_base
 from fraction import Fraction, add_fractions, multiply_fractions
 
+def print_guide():
+    guide = """
+    **Arbitrary Precision Integer Operations**:
+      - Addition (`add`, `+`)
+      - Subtraction (`subtract`, `-`)
+      - Multiplication (`multiply`, `*`)
+      - Division (and remainder) (`divide`, `÷`, `/`)
+      - Modulo (`modulo`, `%`)
+      - Exponentiation (`power`, `^`)
+      - Factorial (`factorial`, `!`)
+
+    **Fraction Operations**:
+      - Addition (`add_fractions`, `+`)
+      - Multiplication (`multiply_fractions`, `*`)
+
+    **Base Conversion**:
+      - Convert numbers between different bases (2 to 36).
+
+    **Logarithms**:
+      - Calculate logarithms with arbitrary bases.
+    """
+    print(guide)
+
+def parse_fraction(fraction_str):
+    num, denom = map(ArbitraryInt, fraction_str.split('/'))
+    return Fraction(num, denom)
+
+def evaluate_expression(tokens):
+    # Operator precedence
+    precedence = {'+': 1, '-': 1, '*': 2, '÷': 2, '/': 2, '%': 2, '^': 3}
+    operators = []
+    operands = []
+
+    def apply_operator():
+        if not operators or len(operands) < 2:
+            raise ValueError("Invalid expression")
+        op = operators.pop()
+        right = operands.pop()
+        left = operands.pop()
+        if op == '+':
+            operands.append(add(left, right))
+        elif op == '-':
+            operands.append(subtract(left, right))
+        elif op == '*':
+            operands.append(multiply(left, right))
+        elif op in {'÷', '/'}:
+            quotient, remainder = divide(left, right)
+            operands.append((quotient, remainder))
+        elif op == '%':
+            operands.append(modulo(left, right))
+        elif op == '^':
+            operands.append(power(left, right))
+
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if '/' in token and token.count('/') == 1 and not token.startswith('/'):
+            operands.append(parse_fraction(token))
+        elif token.isdigit() or (token.startswith('-') and token[1:].isdigit()):
+            operands.append(ArbitraryInt(token))
+        elif token in precedence:
+            while (operators and operators[-1] in precedence and
+                   precedence[operators[-1]] >= precedence[token]):
+                apply_operator()
+            operators.append(token)
+        elif token == '!':
+            if not operands:
+                raise ValueError("Invalid expression")
+            num = operands.pop()
+            operands.append(factorial(num))
+        elif token.startswith('log'):
+            base = ArbitraryInt(token[3:])
+            num = operands.pop()
+            operands.append(logarithm(base, num))
+        elif token == 'to_base':
+            num = operands.pop()
+            base = int(tokens[i + 1])
+            operands.append(to_base(num, base))
+            i += 1
+        elif token == 'from_base':
+            num = tokens[i + 1]
+            base = int(tokens[i + 2])
+            operands.append(from_base(num, base))
+            i += 2
+        else:
+            raise ValueError(f"Invalid token: {token}")
+        i += 1
+
+    while operators:
+        apply_operator()
+
+    if len(operands) != 1:
+        raise ValueError("Invalid expression")
+
+    return operands[0]
+
+def normalize_input(user_input):
+    # Normalize input by adding spaces around operators and handling text-based operations
+    replacements = {
+        '+': ' + ', '-': ' - ', '*': ' * ', '÷': ' ÷ ', '/': ' / ', '^': ' ^ ',
+        'add': ' + ', 'subtract': ' - ', 'multiply': ' * ', 'divide': ' ÷ ',
+        'modulo': ' % ', 'power': ' ^ ', 'factorial': ' ! ', 'logarithm': ' log '
+    }
+    for key, value in replacements.items():
+        user_input = user_input.replace(key, value)
+    return user_input
+
+def clear_screen():
+    # Clear the terminal screen
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 def repl():
     print("Arbitrary Precision Calculator (Type 'exit' to quit)")
+    print_guide()
     while True:
         try:
             user_input = input("> ").strip()
             if user_input.lower() in {'exit', 'quit'}:
                 break
-            
-            # Split input by spaces and symbols
-            parts = user_input.replace('+', ' + ').replace('-', ' - ').replace('*', ' * ').replace('÷', ' ÷ ').replace('^', ' ^ ').replace('/', ' / ').split()
-            
-            if len(parts) < 2:
-                print("Invalid input. Format: <num1> <operation> [<num2>]")
+            if user_input.lower() == 'help':
+                print_guide()
+                continue
+            if user_input.lower() == 'clear':
+                clear_screen()
                 continue
             
-            num1 = ArbitraryInt(parts[0])
-            op = parts[1]
-            num2 = ArbitraryInt(parts[2]) if len(parts) > 2 else None
-
-            if op in {"add", "+"}:
-                print(add(num1, num2))
-            elif op in {"subtract", "-"}:
-                print(subtract(num1, num2))
-            elif op in {"multiply", "*"}:
-                print(multiply(num1, num2))
-            elif op in {"divide", "÷"}:
-                quotient, remainder = divide(num1, num2)
-                print(f"Quotient: {quotient}, Remainder: {remainder}")
-            elif op in {"modulo", "%"}:
-                print(modulo(num1, num2))
-            elif op in {"power", "^"}:
-                print(power(num1, num2))
-            elif op == "factorial" or op == "!":
-                print(factorial(num1))
-            elif op.startswith("log"):
-                base = ArbitraryInt(op[3:])  # Extract base from log2, log10, etc.
-                print(logarithm(base, num1))
-            elif op == "to_base":
-                base = int(parts[2])
-                print(to_base(num1, base))
-            elif op == "from_base":
-                base = int(parts[2])
-                print(from_base(parts[1], base))
-            elif op in {"add_fractions", "+"}:
-                num2 = ArbitraryInt(parts[3])
-                denom2 = ArbitraryInt(parts[4])
-                fraction1 = Fraction(num1, num2)
-                fraction2 = Fraction(num2, denom2)
-                print(add_fractions(fraction1, fraction2))
-            elif op in {"multiply_fractions", "*"}:
-                num2 = ArbitraryInt(parts[3])
-                denom2 = ArbitraryInt(parts[4])
-                fraction1 = Fraction(num1, num2)
-                fraction2 = Fraction(num2, denom2)
-                print(multiply_fractions(fraction1, fraction2))
+            # Normalize input
+            normalized_input = normalize_input(user_input)
+            
+            # Split input by spaces
+            parts = normalized_input.split()
+            
+            if len(parts) < 1:
+                print("Invalid input. Format: <num1> <operation> <num2> [<operation> <num3> ...]")
+                continue
+            
+            # Evaluate the expression
+            result = evaluate_expression(parts)
+            if isinstance(result, tuple):
+                quotient, remainder = result
+                if remainder.value == '0':
+                    print(quotient)
+                else:
+                    print(f"{quotient} remainder {remainder}")
+            elif isinstance(result, Fraction):
+                print(f"{result.numerator} / {result.denominator}")
             else:
-                print("Unknown operation")
+                print(result)
         except ValueError as e:
             print(f"Error: {e}")
         except KeyboardInterrupt:
