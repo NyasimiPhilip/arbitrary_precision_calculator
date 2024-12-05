@@ -43,6 +43,25 @@ def evaluate_expression(tokens):
         op = operators.pop()
         right = operands.pop()
         left = operands.pop()
+
+        # Check if we're dealing with fractions
+        if isinstance(left, Fraction) or isinstance(right, Fraction):
+            if not isinstance(left, Fraction):
+                left = Fraction(left, ArbitraryInt('1'))
+            if not isinstance(right, Fraction):
+                right = Fraction(right, ArbitraryInt('1'))
+            
+            if op == '+':
+                operands.append(add_fractions(left, right))
+            elif op == '-':
+                operands.append(subtract_fractions(left, right))
+            elif op == '*':
+                operands.append(multiply_fractions(left, right))
+            else:
+                raise ValueError(f"Unsupported operation {op} for fractions")
+            return
+
+        # Handle regular arithmetic operations
         if op == '+':
             operands.append(add(left, right))
         elif op == '-':
@@ -64,6 +83,10 @@ def evaluate_expression(tokens):
             # Handle factorial directly after a number
             num = ArbitraryInt(token[:-1])
             operands.append(factorial(num))
+        elif '/' in token and token.count('/') == 1 and not token.startswith('/'):
+            # Handle fraction
+            num, denom = map(ArbitraryInt, token.split('/'))
+            operands.append(Fraction(num, denom))
         elif token.isdigit() or (token.startswith('-') and token[1:].isdigit()):
             operands.append(ArbitraryInt(token))
         elif token == '!':
@@ -76,31 +99,29 @@ def evaluate_expression(tokens):
                    precedence[operators[-1]] >= precedence[token]):
                 apply_operator()
             operators.append(token)
-        elif token.startswith('log'):
-            base = ArbitraryInt(token[3:])
-            num = operands.pop()
-            operands.append(logarithm(base, num))
+        elif token.startswith('log2(') and token.endswith(')'):
+            # Handle logarithm in the format log2(1024)
+            value = ArbitraryInt(token[5:-1])  # Extract number between log2( and )
+            base = ArbitraryInt('2')
+            operands.append(logarithm(base, value))
         elif token == 'to_base':
-            num = operands.pop()
-            base = int(tokens[i + 1])
-            operands.append(to_base(num, base))
-            i += 1
+            if i + 2 >= len(tokens):
+                raise ValueError("Invalid base conversion format")
+            num = ArbitraryInt(tokens[i + 1])
+            base = int(tokens[i + 2])
+            result = to_base(num, base)
+            operands.append(result)
+            i += 3
+            continue
         elif token == 'from_base':
+            if i + 2 >= len(tokens):
+                raise ValueError("Invalid base conversion format")
             num = tokens[i + 1]
             base = int(tokens[i + 2])
-            operands.append(from_base(num, base))
-            i += 2
-        elif token in {'add_fractions', 'multiply_fractions'}:
-            if len(operands) < 2:
-                raise ValueError("Invalid expression for fractions")
-            right = operands.pop()
-            left = operands.pop()
-            if not isinstance(left, Fraction) or not isinstance(right, Fraction):
-                raise ValueError("Both operands must be fractions")
-            if token == 'add_fractions':
-                operands.append(add_fractions(left, right))
-            elif token == 'multiply_fractions':
-                operands.append(multiply_fractions(left, right))
+            result = from_base(num, base)
+            operands.append(result)
+            i += 3
+            continue
         else:
             raise ValueError(f"Invalid token: {token}")
         i += 1

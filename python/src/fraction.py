@@ -18,6 +18,8 @@ class Fraction:
         self.denominator = divide(self.denominator, gcd_value)[0]
 
 def add_fractions(f1: Fraction, f2: Fraction) -> Fraction:
+    if not isinstance(f1, Fraction) or not isinstance(f2, Fraction):
+        raise ValueError("Both operands must be fractions")
     numerator = add(multiply(f1.numerator, f2.denominator), multiply(f2.numerator, f1.denominator))
     denominator = multiply(f1.denominator, f2.denominator)
     return Fraction(numerator, denominator)
@@ -28,6 +30,8 @@ def subtract_fractions(f1: Fraction, f2: Fraction) -> Fraction:
     return Fraction(numerator, denominator)
 
 def multiply_fractions(f1: Fraction, f2: Fraction) -> Fraction:
+    if not isinstance(f1, Fraction) or not isinstance(f2, Fraction):
+        raise ValueError("Both operands must be fractions")
     numerator = multiply(f1.numerator, f2.numerator)
     denominator = multiply(f1.denominator, f2.denominator)
     return Fraction(numerator, denominator)
