@@ -1,8 +1,14 @@
+from operations import add, subtract, multiply, divide, modulo
 from ArbitraryInt import ArbitraryInt
-from operations import add, modulo, subtract, multiply, divide
 
 class Fraction:
     def __init__(self, numerator, denominator):
+        if not isinstance(numerator, ArbitraryInt):
+            numerator = ArbitraryInt(str(numerator))
+        if not isinstance(denominator, ArbitraryInt):
+            denominator = ArbitraryInt(str(denominator))
+        if denominator == ArbitraryInt('0'):
+            raise ValueError("Denominator cannot be zero")
         self.numerator = numerator
         self.denominator = denominator
         self.simplify()
@@ -47,3 +53,10 @@ def subtract_fractions(fraction1, fraction2):
 
 def multiply_fractions(fraction1, fraction2):
     return fraction1 * fraction2
+
+def divide_fractions(fraction1, fraction2):
+    if fraction2.numerator.value == '0':
+        raise ZeroDivisionError("Cannot divide by zero fraction")
+    new_numerator = multiply(fraction1.numerator, fraction2.denominator)
+    new_denominator = multiply(fraction1.denominator, fraction2.numerator)
+    return Fraction(new_numerator, new_denominator)

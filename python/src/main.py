@@ -44,18 +44,13 @@ def evaluate_expression(tokens):
         right = operands.pop()
         left = operands.pop()
 
-        # Convert tuples (from division results) to ArbitraryInt
-        if isinstance(left, tuple):
-            left = left[0]  # Take quotient part
-        if isinstance(right, tuple):
-            right = right[0]  # Take quotient part
-
         # Check if we're dealing with fractions
         if isinstance(left, Fraction) or isinstance(right, Fraction):
             if not isinstance(left, Fraction):
                 left = Fraction(left, ArbitraryInt('1'))
             if not isinstance(right, Fraction):
                 right = Fraction(right, ArbitraryInt('1'))            
+
             if op == '+':
                 operands.append(add_fractions(left, right))
             elif op == '-':
@@ -140,15 +135,19 @@ def evaluate_expression(tokens):
     return operands[0]
 
 def normalize_input(user_input):
-    # Normalize input by adding spaces around operators and handling text-based operations
-    replacements = {
-        '+': ' + ', '-': ' - ', '*': ' * ', '÷': ' ÷ ', '/': ' / ', '^': ' ^ ',
-        'add': ' + ', 'subtract': ' - ', 'multiply': ' * ', 'divide': ' ÷ ',
-        'modulo': ' % ', 'power': ' ^ ', 'factorial': ' ! ', 'logarithm': ' log '
-    }
-    for key, value in replacements.items():
-        user_input = user_input.replace(key, value)
-    return user_input
+    # Special handling for logarithm format
+    if 'log2' in user_input:
+        return user_input  # Don't modify logarithm format
+    
+    # Define operators to add spaces around, excluding '/'
+    operators = ['+', '-', '*', '÷', '^', '%', '!', 'add', 'subtract', 'multiply', 'divide', 'modulo', 'power', 'factorial']
+    
+    # Use regex to add spaces around operators
+    for op in operators:
+        # Use word boundaries to avoid partial replacements
+        user_input = re.sub(rf'\b{op}\b', f' {op} ', user_input)
+    
+    return user_input.strip()
 
 def clear_screen():
     # Clear the terminal screen
