@@ -1,4 +1,5 @@
 import os
+import re
 from ArbitraryInt import ArbitraryInt
 from operations import add, subtract, multiply, divide, modulo, power, factorial, logarithm
 from base_conversion import to_base, from_base
@@ -49,7 +50,7 @@ def evaluate_expression(tokens):
             if not isinstance(left, Fraction):
                 left = Fraction(left, ArbitraryInt('1'))
             if not isinstance(right, Fraction):
-                right = Fraction(right, ArbitraryInt('1'))            
+                right = Fraction(right, ArbitraryInt('1'))
 
             if op == '+':
                 operands.append(add_fractions(left, right))
@@ -140,12 +141,19 @@ def normalize_input(user_input):
         return user_input  # Don't modify logarithm format
     
     # Define operators to add spaces around, excluding '/'
-    operators = ['+', '-', '*', '÷', '^', '%', '!', 'add', 'subtract', 'multiply', 'divide', 'modulo', 'power', 'factorial']
+    operators = ['+', '-', '*', '÷', '^', '%', '!', 
+                'add', 'subtract', 'multiply', 'divide', 
+                'modulo', 'power', 'factorial']
     
-    # Use regex to add spaces around operators
+    # Use regex to add spaces around operators, escaping special regex characters
     for op in operators:
-        # Use word boundaries to avoid partial replacements
-        user_input = re.sub(rf'\b{op}\b', f' {op} ', user_input)
+        escaped_op = re.escape(op)
+        # Use negative lookbehind and lookahead to avoid splitting fractions
+        pattern = rf'(?<!/){escaped_op}(?!/)'
+        user_input = re.sub(pattern, f' {op} ', user_input)
+    
+    # Replace multiple spaces with single space
+    user_input = re.sub(r'\s+', ' ', user_input)
     
     return user_input.strip()
 
