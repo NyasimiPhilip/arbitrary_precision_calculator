@@ -1,42 +1,49 @@
 from ArbitraryInt import ArbitraryInt
-from operations import add, subtract, multiply, divide, gcd
+from operations import add, modulo, subtract, multiply, divide
 
 class Fraction:
-    def __init__(self, numerator: ArbitraryInt, denominator: ArbitraryInt):
-        if denominator.value == '0':
-            raise ZeroDivisionError("Denominator cannot be zero")
+    def __init__(self, numerator, denominator):
         self.numerator = numerator
         self.denominator = denominator
         self.simplify()
 
-    def __repr__(self):
+    def simplify(self):
+        gcd = self._gcd(abs(self.numerator), abs(self.denominator))
+        self.numerator = divide(self.numerator, gcd)[0]
+        self.denominator = divide(self.denominator, gcd)[0]
+
+    def _gcd(self, a, b):
+        while b != ArbitraryInt('0'):
+            a, b = b, modulo(a, b)
+        return a
+
+    def __add__(self, other):
+        common_denominator = multiply(self.denominator, other.denominator)
+        numerator1 = multiply(self.numerator, other.denominator)
+        numerator2 = multiply(other.numerator, self.denominator)
+        result_numerator = add(numerator1, numerator2)
+        return Fraction(result_numerator, common_denominator)
+
+    def __sub__(self, other):
+        common_denominator = multiply(self.denominator, other.denominator)
+        numerator1 = multiply(self.numerator, other.denominator)
+        numerator2 = multiply(other.numerator, self.denominator)
+        result_numerator = subtract(numerator1, numerator2)
+        return Fraction(result_numerator, common_denominator)
+
+    def __mul__(self, other):
+        result_numerator = multiply(self.numerator, other.numerator)
+        result_denominator = multiply(self.denominator, other.denominator)
+        return Fraction(result_numerator, result_denominator)
+
+    def __str__(self):
         return f"{self.numerator} / {self.denominator}"
 
-    def simplify(self):
-        gcd_value = gcd(self.numerator, self.denominator)
-        self.numerator = divide(self.numerator, gcd_value)[0]
-        self.denominator = divide(self.denominator, gcd_value)[0]
+def add_fractions(fraction1, fraction2):
+    return fraction1 + fraction2
 
-def add_fractions(f1: Fraction, f2: Fraction) -> Fraction:
-    if not isinstance(f1, Fraction) or not isinstance(f2, Fraction):
-        raise ValueError("Both operands must be fractions")
-    numerator = add(multiply(f1.numerator, f2.denominator), multiply(f2.numerator, f1.denominator))
-    denominator = multiply(f1.denominator, f2.denominator)
-    return Fraction(numerator, denominator)
+def subtract_fractions(fraction1, fraction2):
+    return fraction1 - fraction2
 
-def subtract_fractions(f1: Fraction, f2: Fraction) -> Fraction:
-    numerator = subtract(multiply(f1.numerator, f2.denominator), multiply(f2.numerator, f1.denominator))
-    denominator = multiply(f1.denominator, f2.denominator)
-    return Fraction(numerator, denominator)
-
-def multiply_fractions(f1: Fraction, f2: Fraction) -> Fraction:
-    if not isinstance(f1, Fraction) or not isinstance(f2, Fraction):
-        raise ValueError("Both operands must be fractions")
-    numerator = multiply(f1.numerator, f2.numerator)
-    denominator = multiply(f1.denominator, f2.denominator)
-    return Fraction(numerator, denominator)
-
-def divide_fractions(f1: Fraction, f2: Fraction) -> Fraction:
-    numerator = multiply(f1.numerator, f2.denominator)
-    denominator = multiply(f1.denominator, f2.numerator)
-    return Fraction(numerator, denominator)
+def multiply_fractions(fraction1, fraction2):
+    return fraction1 * fraction2

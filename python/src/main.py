@@ -2,7 +2,7 @@ import os
 from ArbitraryInt import ArbitraryInt
 from operations import add, subtract, multiply, divide, modulo, power, factorial, logarithm
 from base_conversion import to_base, from_base
-from fraction import Fraction, add_fractions, multiply_fractions
+from fraction import Fraction, add_fractions, multiply_fractions, subtract_fractions
 
 def print_guide():
     guide = """
@@ -44,13 +44,18 @@ def evaluate_expression(tokens):
         right = operands.pop()
         left = operands.pop()
 
+        # Convert tuples (from division results) to ArbitraryInt
+        if isinstance(left, tuple):
+            left = left[0]  # Take quotient part
+        if isinstance(right, tuple):
+            right = right[0]  # Take quotient part
+
         # Check if we're dealing with fractions
         if isinstance(left, Fraction) or isinstance(right, Fraction):
             if not isinstance(left, Fraction):
                 left = Fraction(left, ArbitraryInt('1'))
             if not isinstance(right, Fraction):
-                right = Fraction(right, ArbitraryInt('1'))
-            
+                right = Fraction(right, ArbitraryInt('1'))            
             if op == '+':
                 operands.append(add_fractions(left, right))
             elif op == '-':
@@ -166,7 +171,7 @@ def repl():
             
             # Normalize input
             normalized_input = normalize_input(user_input)
-            
+
             # Split input by spaces
             parts = normalized_input.split()
             

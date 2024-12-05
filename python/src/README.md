@@ -52,6 +52,7 @@ Run the calculator in interactive mode:
 - `from_base <num> <base>`: Converts a number from the specified base to base 10.
 - `1/3 + 1/4`: Adds two fractions.
 - `2/5 * 3/7`: Multiplies two fractions.
+- `1/2 - 1/3`: Subtracts two fractions.
 - `log2(1024)`: Calculates the logarithm of a number with base 2.
 
 ## Testing
