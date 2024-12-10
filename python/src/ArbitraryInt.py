@@ -11,3 +11,26 @@ class ArbitraryInt:
 
     def __abs__(self):
         return ArbitraryInt(self.value)
+
+    def __eq__(self, other):
+        if not isinstance(other, ArbitraryInt):
+            return False
+        return self.is_negative == other.is_negative and self.value == other.value
+
+    def __lt__(self, other):
+        if not isinstance(other, ArbitraryInt):
+            return NotImplemented
+        if self.is_negative != other.is_negative:
+            return self.is_negative
+        if self.is_negative:
+            return self.value > other.value
+        return self.value < other.value
+
+    def __le__(self, other):
+        return self < other or self == other
+
+    def __gt__(self, other):
+        return not self <= other
+
+    def __ge__(self, other):
+        return not self < other
